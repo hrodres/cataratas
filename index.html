@@ -848,17 +848,13 @@
             if (!isToday) {
                 if (selSchedule && Object.keys(selSchedule).length > 0) {
                     const total = Object.keys(selSchedule).length;
-                    let changesHtml = '';
-                    if (isFirstDayOfPhase(selPhase, selectedDate)) {
-                        const changes = getPhaseChanges(selPhase);
-                        if (changes.length > 0) {
-                            changesHtml = `
-                                <div style="margin-top:15px; padding-top:12px; border-top:1px solid rgba(0,0,0,0.1); width:100%;">
-                                    ${changes.map(c => `<div style="font-size:0.85em; opacity:0.8;">${c}</div>`).join('')}
-                                </div>
-                            `;
-                        }
-                    }
+                    // Renderizar SIEMPRE el contenedor de cambios para que la caja no cambie de tamaño
+                    const selPhaseChanges = isFirstDayOfPhase(selPhase, selectedDate) ? getPhaseChanges(selPhase) : [];
+                    const changesHtml = selPhaseChanges.length > 0
+                        ? `<div style="margin-top:12px; padding-top:10px; border-top:1px solid rgba(0,0,0,0.1); width:100%;">
+                                ${selPhaseChanges.map(c => `<div style="font-size:0.85em; opacity:0.8; line-height:1.5;">${c}</div>`).join('')}
+                           </div>`
+                        : `<div style="margin-top:12px; padding-top:10px; border-top:1px solid transparent; width:100%; height:0;"></div>`;
                     panel.className = 'status-panel ok';
                     panel.innerHTML = `
                         <div class="status-icon">📅</div>
@@ -877,7 +873,8 @@
                 return;
             }
 
-            // Info de cambios de fase (solo primer día de la fase)
+            // Info de cambios de fase — SIEMPRE se renderiza el contenedor (vacío si no procede)
+            // para que la caja de estado mantenga el mismo tamaño siempre
             let phaseChangesHtml = '';
             const curPhase = getCurrentPhase(now);
             if (curPhase && isFirstDayOfPhase(curPhase)) {
@@ -887,14 +884,20 @@
                     const dayInfo = getPhaseDayInfo(curPhase);
                     if (changes.length > 0) {
                         phaseChangesHtml = `
-                            <div style="margin-top:15px; padding-top:12px; border-top:1px solid rgba(0,0,0,0.1); width:100%;">
+                            <div style="margin-top:12px; padding-top:10px; border-top:1px solid rgba(0,0,0,0.1); width:100%;">
                                 <div style="font-weight:700; margin-bottom:4px; font-size:0.9em;">${curPhase.name} · Día ${dayInfo.day}/${dayInfo.total}</div>
-                                ${changes.map(c => `<div style="font-size:0.85em; opacity:0.8;">${c}</div>`).join('')}
+                                ${changes.map(c => `<div style="font-size:0.85em; opacity:0.8; line-height:1.5;">${c}</div>`).join('')}
                             </div>
                         `;
                         localStorage.setItem('shownPhaseChanges', curPhase.name);
+                    } else {
+                        phaseChangesHtml = `<div style="margin-top:12px; padding-top:10px; border-top:1px solid transparent; width:100%; height:0;"></div>`;
                     }
+                } else {
+                    phaseChangesHtml = `<div style="margin-top:12px; padding-top:10px; border-top:1px solid transparent; width:100%; height:0;"></div>`;
                 }
+            } else {
+                phaseChangesHtml = `<div style="margin-top:12px; padding-top:10px; border-top:1px solid transparent; width:100%; height:0;"></div>`;
             }
 
             // Buscar la hora actual
