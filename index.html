@@ -611,7 +611,19 @@
             
             // Mostrar la hora actual SIEMPRE
             document.getElementById('timeDisplay').textContent = timeStr;
-            document.getElementById('selectedDateDisplay').textContent = 'Hoy';
+            // Si es hoy mostrar "Hoy", si no mostrar la fecha
+            if (formatDate(selectedDate) === formatDate(now)) {
+                document.getElementById('selectedDateDisplay').textContent = 'Hoy';
+            } else {
+                const dayDiff = Math.round((now - selectedDate) / 86400000);
+                if (dayDiff === 1) {
+                    document.getElementById('selectedDateDisplay').textContent = 'Ayer';
+                } else if (dayDiff === -1) {
+                    document.getElementById('selectedDateDisplay').textContent = 'Mañana';
+                } else {
+                    document.getElementById('selectedDateDisplay').textContent = selectedDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+                }
+            }
 
             // Actualizar input de fecha
             document.getElementById('dateInput').value = formatDate(selectedDate);
@@ -820,11 +832,17 @@
         }
 
         function toggleTime(dateStr, time) {
-            let completed = JSON.parse(localStorage.getItem('completedDoses') || '{}');
-            // Usar la fecha proporcionada o la de hoy
-            const key = dateStr ? `${dateStr}_${time}` : `${formatDate(new Date())}_${time}`;
+            // No permitir marcar días futuros
+            if (dateStr) {
+                const today = formatDate(new Date());
+                if (dateStr > today) return;
+            }
 
-            if (completed[key]) {
+            let completed = JSON.parse(localStorage.getItem('completedDoses') || '{}');
+            const key = dateStr ? `${dateStr}_${time}` : `${formatDate(new Date())}_${time}`;
+            const wasCompleted = !!completed[key];
+
+            if (wasCompleted) {
                 delete completed[key];
             } else {
                 completed[key] = true;
@@ -832,22 +850,29 @@
 
             localStorage.setItem('completedDoses', JSON.stringify(completed));
             updateDisplay();
-            // Sonido al marcar como hecho
-            if (completed[key]) {
-                try {
-                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.frequency.value = 880;
-                    osc.type = 'sine';
-                    gain.gain.setValueAtTime(0.2, ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-                    osc.start(ctx.currentTime);
-                    osc.stop(ctx.currentTime + 0.3);
-                } catch(e) {}
-            }
+
+            // Sonido
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                if (wasCompleted) {
+                    // Sonido de deshacer: dos tonos descendentes
+                    osc.frequency.setValueAtTime(660, ctx.currentTime);
+                    osc.frequency.setValueAtTime(440, ctx.currentTime + 0.15);
+                } else {
+                    // Sonido de completado: tono ascendente
+                    osc.frequency.setValueAtTime(550, ctx.currentTime);
+                    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15);
+                }
+                osc.type = 'sine';
+                gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.4);
+            } catch(e) {}
         }
 
         function isTimeCompleted(date, time) {
