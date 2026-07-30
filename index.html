@@ -656,9 +656,17 @@
                 const prevN = prevCounts[med] || 0;
                 const currN = currCounts[med] || 0;
                 if (currN > prevN) {
-                    changes.push(`📈 ${med} sube a ${currN} veces`);
+                    if (prevN === 0) {
+                        changes.push(`🆕 ${med} (nuevo, ${currN} veces al día)`);
+                    } else {
+                        changes.push(`📈 ${med} sube a ${currN} veces`);
+                    }
                 } else if (currN < prevN) {
-                    changes.push(currN === 0 ? `🆕 Ya no toca ${med}` : `📉 ${med} baja a ${currN} veces`);
+                    if (currN === 0) {
+                        changes.push(`✖️ Ya no toca ${med}`);
+                    } else {
+                        changes.push(`📉 ${med} baja a ${currN} veces`);
+                    }
                 }
             });
 
