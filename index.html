@@ -631,6 +631,55 @@
             return phase ? phase.schedule : {};
         }
 
+        function getPhaseChanges(phase) {
+            // Encontrar fase anterior
+            const idx = TREATMENT_PLAN.phases.indexOf(phase);
+            if (idx <= 0) return [];
+            const prev = TREATMENT_PLAN.phases[idx - 1];
+
+            // Contar veces de cada medicamento en ambas fases
+            function countMeds(schedule) {
+                const counts = {};
+                Object.values(schedule).forEach(meds => {
+                    meds.forEach(m => { counts[m] = (counts[m] || 0) + 1; });
+                });
+                return counts;
+            }
+
+            const prevCounts = countMeds(prev.schedule);
+            const currCounts = countMeds(phase.schedule);
+
+            const changes = [];
+            const allMeds = new Set([...Object.keys(prevCounts), ...Object.keys(currCounts)]);
+
+            allMeds.forEach(med => {
+                const prevN = prevCounts[med] || 0;
+                const currN = currCounts[med] || 0;
+                if (currN > prevN) {
+                    changes.push(`📈 ${med} sube a ${currN} veces`);
+                } else if (currN < prevN) {
+                    changes.push(currN === 0 ? `🆕 Ya no toca ${med}` : `📉 ${med} baja a ${currN} veces`);
+                }
+            });
+
+            return changes;
+        }
+
+        function getPhaseDayInfo(phase) {
+            const today = formatDate(new Date());
+            const start = new Date(phase.start + 'T12:00:00');
+            const end = new Date(phase.end + 'T12:00:00');
+            const total = Math.round((end - start) / 86400000) + 1;
+            const day = Math.round((new Date(today + 'T12:00:00') - start) / 86400000) + 1;
+            return { total, day: Math.max(1, Math.min(day, total)) };
+        }
+
+        function isFirstDayOfPhase(phase) {
+            if (!phase) return false;
+            const today = formatDate(new Date());
+            return today === phase.start;
+        }
+
         function updateDisplay() {
             const now = new Date();
             const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
@@ -809,7 +858,27 @@
                 return;
             }
 
-            // Buscar la hora actual (la más cercana o la que está sonando ahora)
+            // Info de cambios de fase (solo primer día de la fase)
+            let phaseChangesHtml = '';
+            const curPhase = getCurrentPhase(now);
+            if (curPhase && isFirstDayOfPhase(curPhase)) {
+                const shown = localStorage.getItem('shownPhaseChanges') || '';
+                if (shown !== curPhase.name) {
+                    const changes = getPhaseChanges(curPhase);
+                    const dayInfo = getPhaseDayInfo(curPhase);
+                    if (changes.length > 0) {
+                        phaseChangesHtml = `
+                            <div style="margin-top:15px; padding-top:12px; border-top:1px solid rgba(0,0,0,0.1); width:100%;">
+                                <div style="font-weight:700; margin-bottom:4px; font-size:0.9em;">${curPhase.name} · Día ${dayInfo.day}/${dayInfo.total}</div>
+                                ${changes.map(c => `<div style="font-size:0.85em; opacity:0.8;">${c}</div>`).join('')}
+                            </div>
+                        `;
+                        localStorage.setItem('shownPhaseChanges', curPhase.name);
+                    }
+                }
+            }
+
+            // Buscar la hora actual
             let currentHour = null;
             let pastPending = [];
             let allDone = true;
@@ -834,7 +903,6 @@
             });
 
             if (currentHour) {
-                // Hay dosis que tocan ahora
                 panel.className = 'status-panel now';
                 panel.innerHTML = `
                     <div class="status-icon">⏰</div>
@@ -842,25 +910,25 @@
                     <div class="status-sub">${currentHour}</div>
                     <div class="status-meds">${schedule[currentHour].map(m => (MEDICINE_ICONS[m] || '💧') + ' ' + m).join(' &nbsp;&nbsp;')}</div>
                     <button class="status-btn" onclick="toggleTime('${today}', '${currentHour}')">✅ Hecho</button>
+                    ${phaseChangesHtml}
                 `;
             } else if (pastPending.length > 0 && times.slice(-1)[0] !== pastPending.slice(-1)[0]) {
-                // Hay dosis pasadas sin marcar (excepto la última que podría ser de noche)
                 panel.className = 'status-panel pending';
                 panel.innerHTML = `
                     <div class="status-icon">⚠️</div>
                     <div class="status-title">Hay pendientes</div>
                     <div class="status-sub">Falta marcar: ${pastPending.join(', ')}</div>
+                    ${phaseChangesHtml}
                 `;
             } else if (allDone && times.length > 0) {
-                // Todo completado
                 panel.className = 'status-panel ok';
                 panel.innerHTML = `
                     <div class="status-icon">✅</div>
                     <div class="status-title">Todo en orden</div>
                     <div class="status-sub">Has completado todas las dosis de hoy</div>
+                    ${phaseChangesHtml}
                 `;
             } else {
-                // Próxima dosis
                 let nextTime = times.find(t => {
                     const [h, m] = t.split(':').map(Number);
                     return h * 60 + m > nTime && !isTimeCompleted(now, t);
@@ -870,6 +938,7 @@
                     <div class="status-icon">⏳</div>
                     <div class="status-title">Todo bien</div>
                     <div class="status-sub">Próxima dosis: ${nextTime || '—'}</div>
+                    ${phaseChangesHtml}
                 `;
             }
         }
