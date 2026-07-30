@@ -483,7 +483,19 @@
 
         // Variable para controlar qué día se está viendo
         let selectedDate = new Date();
-        window.userSelectedDate = false;
+        
+        // Calcular día inicial: hoy normalmente, ayer entre 00:00-00:30
+        (function initDate() {
+            const now = new Date();
+            const hour = now.getHours();
+            const minute = now.getMinutes();
+            if (hour === 0 && minute <= 30) {
+                selectedDate = new Date(now);
+                selectedDate.setDate(selectedDate.getDate() - 1);
+            } else {
+                selectedDate = new Date(now);
+            }
+        })();
 
         function formatDate(date) {
             // Usar año-mes-día en zona horaria local, no UTC
@@ -495,33 +507,20 @@
 
         function previousDay() {
             selectedDate.setDate(selectedDate.getDate() - 1);
-            window.userSelectedDate = true;
-            setTimeout(() => { window.userSelectedDate = false; }, 5000);
             updateDisplay();
         }
 
         function nextDay() {
             selectedDate.setDate(selectedDate.getDate() + 1);
-            window.userSelectedDate = true;
-            setTimeout(() => { window.userSelectedDate = false; }, 5000);
             updateDisplay();
         }
 
         function jumpToDate() {
             const input = document.getElementById('dateInput').value;
             if (input) {
-                // Parseando YYYY-MM-DD sin conversión UTC
                 const [year, month, day] = input.split('-');
                 selectedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                
-                // Evitar que updateDisplay vuelva a cambiar la fecha
-                // Guardamos que el usuario eligió manualmente
-                window.userSelectedDate = true;
-                
                 updateDisplay();
-                
-                // Limpiar después de un tiempo
-                setTimeout(() => { window.userSelectedDate = false; }, 1000);
             }
         }
 
@@ -541,21 +540,6 @@
         function updateDisplay() {
             const now = new Date();
             const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-            
-            // Si el usuario NO seleccionó manualmente una fecha, calcular automáticamente
-            if (!window.userSelectedDate) {
-                const hour = now.getHours();
-                const minute = now.getMinutes();
-                
-                // De 00:00 a 00:30, mostrar el día anterior (para ver y marcar las 23:59)
-                if (hour === 0 && minute <= 30) {
-                    selectedDate = new Date(now);
-                    selectedDate.setDate(selectedDate.getDate() - 1);
-                } else {
-                    // En cualquier otro caso, mostrar hoy
-                    selectedDate = new Date(now);
-                }
-            }
             
             // Mostrar la hora actual SIEMPRE
             document.getElementById('timeDisplay').textContent = timeStr;
@@ -707,27 +691,20 @@
             return completed[`${dateStr}_${time}`] || false;
         }
 
-        // Registrar Service Worker
+        // Registrar Service Worker (URL fija, sin timestamp para evitar falsas actualizaciones)
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./service-worker.js?v=' + Date.now())
+            navigator.serviceWorker.register('./service-worker.js')
                 .then(reg => {
                     console.log('Service Worker registrado');
                     
-                    // Revisar actualizaciones cada 5 minutos
-                    setInterval(() => {
-                        reg.update();
-                    }, 5 * 60 * 1000);
-                    
-                    // Detectar actualizaciones
+                    // Detectar actualizaciones reales
                     reg.addEventListener('updatefound', () => {
                         const newWorker = reg.installing;
+                        const updateBtn = document.getElementById('updateButton');
                         newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'activated') {
-                                // Mostrar botón de actualización
-                                const updateBtn = document.getElementById('updateButton');
-                                if (updateBtn) {
-                                    updateBtn.style.display = 'block';
-                                }
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // Nueva versión disponible, mostrar botón
+                                if (updateBtn) updateBtn.style.display = 'block';
                             }
                         });
                     });

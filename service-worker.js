@@ -1,7 +1,5 @@
 // Service Worker para notificaciones
-// Usar timestamp para invalidar caché automáticamente
-const CACHE_VERSION = 'tratamiento-ocular-v' + Math.floor(Date.now() / 3600000); // Cambia cada hora
-const CACHE_NAME = CACHE_VERSION;
+const CACHE_NAME = 'tratamiento-ocular-v1';
 const STATIC_ASSETS = [
   './',
   './index.html',
