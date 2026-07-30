@@ -682,10 +682,10 @@
             return { total, day: Math.max(1, Math.min(day, total)) };
         }
 
-        function isFirstDayOfPhase(phase) {
+        function isFirstDayOfPhase(phase, date) {
             if (!phase) return false;
-            const today = formatDate(new Date());
-            return today === phase.start;
+            const check = date ? formatDate(date) : formatDate(new Date());
+            return check === phase.start;
         }
 
         function updateDisplay() {
@@ -847,13 +847,24 @@
 
             if (!isToday) {
                 if (selSchedule && Object.keys(selSchedule).length > 0) {
-                    // Ver cuántas dosis tiene ese día
                     const total = Object.keys(selSchedule).length;
+                    let changesHtml = '';
+                    if (isFirstDayOfPhase(selPhase, selectedDate)) {
+                        const changes = getPhaseChanges(selPhase);
+                        if (changes.length > 0) {
+                            changesHtml = `
+                                <div style="margin-top:15px; padding-top:12px; border-top:1px solid rgba(0,0,0,0.1); width:100%;">
+                                    ${changes.map(c => `<div style="font-size:0.85em; opacity:0.8;">${c}</div>`).join('')}
+                                </div>
+                            `;
+                        }
+                    }
                     panel.className = 'status-panel ok';
                     panel.innerHTML = `
                         <div class="status-icon">📅</div>
                         <div class="status-title" style="font-size:1.2em">${selPhase.name}</div>
                         <div class="status-sub">${total} dosis — ver más abajo</div>
+                        ${changesHtml}
                     `;
                 } else {
                     panel.className = 'status-panel';
