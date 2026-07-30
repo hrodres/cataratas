@@ -281,6 +281,71 @@
             }
         }
 
+        /* Panel de estado actual (QUE TOCA AHORA) */
+        .status-panel {
+            background: white;
+            border-radius: 20px;
+            padding: 25px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            font-size: 1.3em;
+        }
+        .status-panel.now {
+            background: #e8f5e9;
+            border: 3px solid #28a745;
+        }
+        .status-panel.pending {
+            background: #ffebee;
+            border: 3px solid #dc3545;
+        }
+        .status-panel.ok {
+            background: #e3f2fd;
+            border: 3px solid #667eea;
+        }
+        .status-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .status-title {
+            font-size: 1.8em;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+        .status-sub {
+            font-size: 1em;
+            opacity: 0.8;
+        }
+        .status-meds {
+            font-size: 1.3em;
+            margin-top: 12px;
+            font-weight: 600;
+            background: rgba(255,255,255,0.5);
+            padding: 10px 16px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+        .status-btn {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 18px 40px;
+            font-size: 1.3em;
+            font-weight: 700;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            color: white;
+            background: #28a745;
+            transition: all 0.3s;
+        }
+        .status-btn:active {
+            transform: scale(0.95);
+        }
+        @media (max-width: 600px) {
+            .status-title { font-size: 1.5em; }
+            .status-meds { font-size: 1.1em; }
+        }
+
         .alert {
             background: #fff3cd;
             border-left: 6px solid #ffc107;
@@ -304,6 +369,9 @@
             <div class="date-display" id="dateDisplay">-</div>
             <div class="phase-badge" id="phaseDisplay">-</div>
         </div>
+
+        <!-- PANEL DE ESTADO ACTUAL -->
+        <div id="statusPanel" class="status-panel"></div>
 
         <div id="alertBox"></div>
 
@@ -555,6 +623,7 @@
             document.getElementById('phaseDisplay').textContent = phase.name;
 
             updateDailySchedule(selectedDate, timeStr);
+            updateStatusPanel();
         }
 
         function updateDailySchedule(date, timeStr) {
@@ -670,6 +739,85 @@
             container.innerHTML = html;
         }
 
+        function updateStatusPanel() {
+            const panel = document.getElementById('statusPanel');
+            const now = new Date();
+            const today = formatDate(now);
+            const schedule = getScheduleForDate(now);
+            const nTime = now.getHours() * 60 + now.getMinutes();
+            const isToday = formatDate(selectedDate) === today;
+
+            if (!isToday) {
+                panel.innerHTML = '';
+                panel.className = 'status-panel';
+                return;
+            }
+
+            // Buscar la hora actual (la más cercana o la que está sonando ahora)
+            let currentHour = null;
+            let pastPending = [];
+            let allDone = true;
+
+            const times = Object.keys(schedule).filter(t => {
+                const [h, m] = t.split(':').map(Number);
+                return h * 60 + m >= 540; // desde 09:00
+            }).sort();
+
+            times.forEach(time => {
+                const [h, m] = time.split(':').map(Number);
+                const tTime = h * 60 + m;
+                const done = isTimeCompleted(now, time);
+
+                if (tTime <= nTime && tTime + 60 > nTime && !done) {
+                    currentHour = time;
+                }
+                if (tTime < nTime && !done) {
+                    pastPending.push(time);
+                }
+                if (!done) allDone = false;
+            });
+
+            if (currentHour) {
+                // Hay dosis que tocan ahora
+                panel.className = 'status-panel now';
+                panel.innerHTML = `
+                    <div class="status-icon">⏰</div>
+                    <div class="status-title">¡AHORA!</div>
+                    <div class="status-sub">${currentHour}</div>
+                    <div class="status-meds">${schedule[currentHour].map(m => (MEDICINE_ICONS[m] || '💧') + ' ' + m).join(' &nbsp;&nbsp;')}</div>
+                    <button class="status-btn" onclick="toggleTime('${today}', '${currentHour}')">✅ Hecho</button>
+                `;
+            } else if (pastPending.length > 0 && times.slice(-1)[0] !== pastPending.slice(-1)[0]) {
+                // Hay dosis pasadas sin marcar (excepto la última que podría ser de noche)
+                panel.className = 'status-panel pending';
+                panel.innerHTML = `
+                    <div class="status-icon">⚠️</div>
+                    <div class="status-title">Hay pendientes</div>
+                    <div class="status-sub">Falta marcar: ${pastPending.join(', ')}</div>
+                `;
+            } else if (allDone && times.length > 0) {
+                // Todo completado
+                panel.className = 'status-panel ok';
+                panel.innerHTML = `
+                    <div class="status-icon">✅</div>
+                    <div class="status-title">Todo en orden</div>
+                    <div class="status-sub">Has completado todas las dosis de hoy</div>
+                `;
+            } else {
+                // Próxima dosis
+                let nextTime = times.find(t => {
+                    const [h, m] = t.split(':').map(Number);
+                    return h * 60 + m > nTime && !isTimeCompleted(now, t);
+                });
+                panel.className = 'status-panel ok';
+                panel.innerHTML = `
+                    <div class="status-icon">⏳</div>
+                    <div class="status-title">Todo bien</div>
+                    <div class="status-sub">Próxima dosis: ${nextTime || '—'}</div>
+                `;
+            }
+        }
+
         function toggleTime(dateStr, time) {
             let completed = JSON.parse(localStorage.getItem('completedDoses') || '{}');
             // Usar la fecha proporcionada o la de hoy
@@ -683,6 +831,22 @@
 
             localStorage.setItem('completedDoses', JSON.stringify(completed));
             updateDisplay();
+            // Sonido al marcar como hecho
+            if (completed[key]) {
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.frequency.value = 880;
+                    osc.type = 'sine';
+                    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                    osc.start(ctx.currentTime);
+                    osc.stop(ctx.currentTime + 0.3);
+                } catch(e) {}
+            }
         }
 
         function isTimeCompleted(date, time) {
