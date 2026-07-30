@@ -813,7 +813,7 @@
                             <div style="font-size: 1.4em; font-weight: 700; color: #333; font-family: 'Monaco', monospace; margin-bottom: 8px;">
                                 ${indicator} ${time}
                             </div>
-                            <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <div style="display: flex; flex-direction: column; gap: 6px; align-items: flex-start;">
                                 ${medicines.map(med => {
                                     let medIcon = MEDICINE_ICONS[med] || '💧';
                                     return `<span style="background: white; padding: 6px 12px; border-radius: 6px; font-size: 0.9em; border: 1px solid #ddd;">${medIcon} ${med}</span>`;
