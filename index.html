@@ -682,6 +682,21 @@
             return { total, day: Math.max(1, Math.min(day, total)) };
         }
 
+        function getProgressBar(phase) {
+            if (!phase) return '';
+            const dayInfo = getPhaseDayInfo(phase);
+            const total = dayInfo.total;
+            const day = dayInfo.day;
+            const segs = 16;
+            const filled = Math.round(day / total * segs);
+            const empty = segs - filled;
+            const bar = '█'.repeat(filled) + '░'.repeat(empty);
+            return `<div style="margin-top:12px; padding-top:10px; border-top:1px solid rgba(0,0,0,0.1); width:100%;">
+                <div style="font-weight:700; margin-bottom:2px; font-size:0.95em;">${phase.name} · Día ${day}/${total}</div>
+                <div style="font-size:1.2em; letter-spacing:2px; opacity:0.8;">${bar}</div>
+            </div>`;
+        }
+
         function isFirstDayOfPhase(phase, date) {
             if (!phase) return false;
             const check = date ? formatDate(date) : formatDate(new Date());
@@ -859,8 +874,8 @@
                     panel.innerHTML = `
                         <div class="status-icon">🗓️</div>
                         <div class="status-title" style="font-size:1.2em">${selPhase.name}</div>
-                        <div class="status-sub">${total} tomas al día — ver más abajo</div>
-                        ${changesHtml}
+                        <div class="status-sub">${total} tomas al día</div>
+                        ${changesHtml.length > 0 ? changesHtml : getProgressBar(selPhase)}
                     `;
                 } else {
                     panel.className = 'status-panel';
@@ -891,13 +906,13 @@
                         `;
                         localStorage.setItem('shownPhaseChanges', curPhase.name);
                     } else {
-                        phaseChangesHtml = `<div style="margin-top:12px; padding-top:10px; border-top:1px solid transparent; width:100%; height:0;"></div>`;
+                        phaseChangesHtml = getProgressBar(curPhase);
                     }
                 } else {
-                    phaseChangesHtml = `<div style="margin-top:12px; padding-top:10px; border-top:1px solid transparent; width:100%; height:0;"></div>`;
+                    phaseChangesHtml = getProgressBar(curPhase);
                 }
             } else {
-                phaseChangesHtml = `<div style="margin-top:12px; padding-top:10px; border-top:1px solid transparent; width:100%; height:0;"></div>`;
+                phaseChangesHtml = getProgressBar(curPhase);
             }
 
             // Buscar la hora actual
