@@ -290,6 +290,11 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             text-align: center;
             font-size: 1.3em;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
         .status-panel.now {
             background: #e8f5e9;
@@ -573,13 +578,28 @@
             return `${year}-${month}-${day}`;
         }
 
+        function clampDate(date) {
+            const ds = formatDate(date);
+            if (ds < TREATMENT_START) {
+                const [y, m, d] = TREATMENT_START.split('-').map(Number);
+                return new Date(y, m - 1, d);
+            }
+            if (ds > TREATMENT_END) {
+                const [y, m, d] = TREATMENT_END.split('-').map(Number);
+                return new Date(y, m - 1, d);
+            }
+            return date;
+        }
+
         function previousDay() {
             selectedDate.setDate(selectedDate.getDate() - 1);
+            selectedDate = clampDate(selectedDate);
             updateDisplay();
         }
 
         function nextDay() {
             selectedDate.setDate(selectedDate.getDate() + 1);
+            selectedDate = clampDate(selectedDate);
             updateDisplay();
         }
 
@@ -588,9 +608,15 @@
             if (input) {
                 const [year, month, day] = input.split('-');
                 selectedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                selectedDate = clampDate(selectedDate);
+                // Actualizar el input al valor real
+                document.getElementById('dateInput').value = formatDate(selectedDate);
                 updateDisplay();
             }
         }
+
+        const TREATMENT_START = '2026-07-30';
+        const TREATMENT_END = '2026-10-05';
 
         function getCurrentPhase(date = null) {
             const checkDate = date || selectedDate;
@@ -759,10 +785,27 @@
             const schedule = getScheduleForDate(now);
             const nTime = now.getHours() * 60 + now.getMinutes();
             const isToday = formatDate(selectedDate) === today;
+            const selPhase = getCurrentPhase(selectedDate);
+            const selSchedule = getScheduleForDate(selectedDate);
 
             if (!isToday) {
-                panel.innerHTML = '';
-                panel.className = 'status-panel';
+                if (selSchedule && Object.keys(selSchedule).length > 0) {
+                    // Ver cuántas dosis tiene ese día
+                    const total = Object.keys(selSchedule).length;
+                    panel.className = 'status-panel ok';
+                    panel.innerHTML = `
+                        <div class="status-icon">📅</div>
+                        <div class="status-title" style="font-size:1.2em">${selPhase.name}</div>
+                        <div class="status-sub">${total} dosis — ver más abajo</div>
+                    `;
+                } else {
+                    panel.className = 'status-panel';
+                    panel.innerHTML = `
+                        <div class="status-icon">🚫</div>
+                        <div class="status-title" style="font-size:1.2em">Sin tratamiento</div>
+                        <div class="status-sub">No hay dosis programadas para este día</div>
+                    `;
+                }
                 return;
             }
 
