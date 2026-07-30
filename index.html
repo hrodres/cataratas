@@ -254,7 +254,59 @@
             font-size: 1.3em;
         }
 
-        @media (max-width: 600px) {
+        
+        .visits {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border-left: 6px solid #28a745;
+            margin-bottom: 20px;
+        }
+        .visits h3 {
+            color: #28a745;
+            margin-bottom: 15px;
+        }
+        .visit-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        .visit-list li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+            font-size: 1em;
+        }
+        .visit-list li.past {
+            color: #999;
+            text-decoration: line-through;
+        }
+        .visit-list li.past:before {
+            content: "✅";
+            position: absolute;
+            left: 0;
+            font-size: 1em;
+        }
+        .visit-list li.today {
+            background: #fff3cd;
+            border-radius: 8px;
+            padding: 10px 10px 10px 30px;
+            font-weight: 700;
+            color: #856404;
+        }
+        .visit-list li.today:before {
+            content: "🟡";
+            position: absolute;
+            left: 5px;
+            font-size: 0.9em;
+        }
+        .visit-list li.future:before {
+            content: "🔵";
+            position: absolute;
+            left: 0;
+            font-size: 0.9em;
+        }
+@media (max-width: 600px) {
             body {
                 padding: 10px;
             }
@@ -410,7 +462,21 @@
             </ul>
         </div>
 
-        <!-- Botón de actualización (superior derecha) -->
+        
+        <!-- VISITAS MÉDICAS -->
+        <div class=visits>
+            <h3>🗓️ Próximas visitas médicas</h3>
+            <ul class=visit-list id=visitList>
+                <li class="past" data-date="2026-07-29" data-time="14:30">29 Jul 14:30 — Cirugía</li>
+                <li data-date="2026-07-30" data-time="16:35">30 Jul 16:35 — Revisión</li>
+                <li data-date="2026-08-05" data-time="13:00">5 Ago 13:00 — Revisión</li>
+                <li data-date="2026-08-13" data-time="09:39">13 Ago 9:39 — Revisión</li>
+                <li data-date="2026-08-24" data-time="18:30">24 Ago 18:30 — Revisión</li>
+                <li data-date="2026-09-02" data-time="13:00">2 Sep 13:00 — Revisión</li>
+            </ul>
+        </div>
+
+<!-- Botón de actualización (superior derecha) -->
         <div id="updateButton" style="
             position: fixed;
             top: 20px;
@@ -1156,5 +1222,26 @@
         setInterval(updateDisplay, 1000);
         updateDisplay();
     </script>
+
+    // Visitas médicas - estado dinámico
+    (function() {
+        const visits = document.querySelectorAll('#visitList li');
+        const now = new Date();
+        visits.forEach(li => {
+            const dateStr = li.getAttribute('data-date');
+            const timeStr = li.getAttribute('data-time');
+            if (!dateStr) return;
+            const [h, m] = (timeStr || '00:00').split(':').map(Number);
+            const visitDate = new Date(dateStr + 'T' + String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':00');
+            if (visitDate < now) {
+                li.classList.add('past');
+            } else if (dateStr === now.toISOString().slice(0,10)) {
+                li.classList.add('today');
+            } else {
+                li.classList.add('future');
+            }
+        });
+    })();
+
 </body>
 </html>
