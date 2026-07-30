@@ -261,7 +261,7 @@
             padding: 25px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             border-left: 6px solid #28a745;
-            margin: 20px 0;
+            margin-bottom: 20px;
         }
         .visits h3 {
             color: #28a745;
@@ -637,7 +637,6 @@
                 selectedDate = new Date(now);
             }
         })();
-</script>
 
         function formatDate(date) {
             // Usar año-mes-día en zona horaria local, no UTC
@@ -1224,7 +1223,6 @@
         updateDisplay();
     </script>
 
-    <script>
     // Visitas médicas - estado dinámico
     (function() {
         const visits = document.querySelectorAll('#visitList li');
@@ -1244,7 +1242,6 @@
             }
         });
     })();
-</script>
 
 </body>
 </html>
