@@ -30,7 +30,7 @@ Una **aplicación web progresiva (PWA)** diseñada para que una persona mayor pu
 
 | Fase | Período | Medicamentos |
 |------|---------|-------------|
-| — | **Todas las fases** | OFTALMOLOSA |
+| Todas | 30 jul - fin de producto | OFTALMOLOSA |
 | FASE 1 | 30 jul – 2 ago | LEPHANET, YELLOX, TOBRADEX (6×) |
 | FASE 2 | 3 – 4 ago | ⬇️ TOBRADEX baja |
 | FASE 3 | 5 – 7 ago | 🆕 THEALOZ DUO |
