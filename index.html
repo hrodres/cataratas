@@ -616,7 +616,8 @@
             // Actualizar input de fecha
             document.getElementById('dateInput').value = formatDate(selectedDate);
 
-            const dateStr = selectedDate.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            // La fecha completa SIEMPRE muestra hoy (no el día navegado)
+            const dateStr = now.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             document.getElementById('dateDisplay').textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
 
             const phase = getCurrentPhase(selectedDate);
