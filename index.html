@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <meta name="description" content="Control de tratamiento post-quirúrgico ocular">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='50' font-size='90' text-anchor='middle' dominant-baseline='central'>👁️</text></svg>">
+    <title>Control Tratamiento Ocular</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            padding: 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .current-time {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .time-display {
+            font-size: 3.5em;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-family: 'Monaco', monospace;
+        }
+
+        .date-display {
+            font-size: 1.3em;
+            color: #666;
+        }
+
+        .phase-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+
+        .medicines-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .medicine-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border-left: 6px solid #667eea;
+        }
+
+        .medicine-card.done {
+            opacity: 0.6;
+            border-left-color: #28a745;
+            background: #f0f8f4;
+        }
+
+        .medicine-time {
+            font-size: 2.2em;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 15px;
+            font-family: 'Monaco', monospace;
+        }
+
+        .medicine-items {
+            margin-bottom: 20px;
+        }
+
+        .medicine-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 1.2em;
+            padding: 8px 0;
+        }
+
+        .medicine-icon {
+            font-size: 1.5em;
+            margin-right: 12px;
+        }
+
+        .medicine-name {
+            flex: 1;
+            font-weight: 600;
+        }
+
+        .medicine-dose {
+            background: #f0f0f0;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.95em;
+            color: #666;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 18px 20px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-mark {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-mark:hover:not(:disabled) {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-mark:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-undo {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-undo:hover {
+            background: #ffb300;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 193, 7, 0.3);
+        }
+
+        .next-doses {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .next-doses h2 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .dose-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 1.1em;
+        }
+
+        .dose-item:last-child {
+            border-bottom: none;
+        }
+
+        .dose-time {
+            font-weight: 700;
+            color: #667eea;
+            font-family: 'Monaco', monospace;
+            font-size: 1.3em;
+        }
+
+        .dose-meds {
+            color: #666;
+        }
+
+        .instructions {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            font-size: 1.05em;
+            line-height: 1.8;
+        }
+
+        .instructions h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .instruction-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .instruction-list li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .instruction-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #28a745;
+            font-weight: bold;
+            font-size: 1.3em;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .time-display {
+                font-size: 2.5em;
+            }
+
+            .medicine-time {
+                font-size: 1.8em;
+            }
+
+            .medicine-item {
+                font-size: 1em;
+            }
+
+            .btn {
+                padding: 15px 16px;
+                font-size: 1em;
+            }
+        }
+
+        .alert {
+            background: #fff3cd;
+            border-left: 6px solid #ffc107;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👁️ Control de Tratamiento Ocular</h1>
+            <p>Ojo izquierdo - Post-operatorio</p>
+        </div>
+
+        <div class="current-time">
+            <div class="time-display" id="timeDisplay">--:--</div>
+            <div class="date-display" id="dateDisplay">-</div>
+            <div class="phase-badge" id="phaseDisplay">-</div>
+        </div>
+
+        <div id="alertBox"></div>
+
+        <!-- SELECTOR DE FECHA -->
+        <div style="background: white; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: nowrap;">
+            <button onclick="previousDay()" style="background: #667eea; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 1.3em; cursor: pointer; font-weight: 600; flex-shrink: 0;">←</button>
+            <div style="text-align: center; flex: 1; min-width: 200px;">
+                <div style="font-size: 1.3em; font-weight: 700; color: #333; margin-bottom: 8px;">
+                    📅 <span id="selectedDateDisplay">Hoy</span>
+                </div>
+                <input type="date" id="dateInput" onchange="jumpToDate()" style="font-size: 1.1em; padding: 8px 12px; border: 2px solid #667eea; border-radius: 8px; text-align: center;">
+            </div>
+            <button onclick="nextDay()" style="background: #667eea; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 1.3em; cursor: pointer; font-weight: 600; flex-shrink: 0;">→</button>
+        </div>
+
+        <div class="next-doses">
+            <h2>📋 Horario completo de HOY</h2>
+            <div id="dailySchedule"></div>
+        </div>
+
+        <div class="instructions">
+            <h3>📋 Recordatorios importantes</h3>
+            <ul class="instruction-list">
+                <li>Limpiar párpados con LEPHANET antes de aplicar colirios (09:00 h y 00:00 h)</li>
+                <li>Esperar 5-10 minutos entre medicamentos si coinciden</li>
+                <li>Evitar movimientos bruscos de cabeza (hasta 5 de agosto)</li>
+                <li>No dormir sobre el lado del ojo operado (hasta 5 de agosto)</li>
+                <li>Si olvida una dosis, aplicarla cuando lo recuerde</li>
+            </ul>
+        </div>
+
+        <!-- Botón de actualización (superior derecha) -->
+        <div id="updateButton" style="
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+            display: none;
+            z-index: 1000;
+        " onclick="updateApp()">
+            ⬆️ Actualizar
+        </div>
+    </div>
+
+    <script>
+        const TREATMENT_PLAN = {
+            phases: [
+                {
+                    name: "FASE 1",
+                    start: "2026-07-30",
+                    end: "2026-08-02",
+                    schedule: {
+                        "09:00": ["LEPHANET", "YELLOX", "TOBRADEX"],
+                        "12:00": ["TOBRADEX"],
+                        "15:00": ["TOBRADEX"],
+                        "18:00": ["TOBRADEX"],
+                        "21:00": ["YELLOX", "TOBRADEX"],
+                        "23:59": ["LEPHANET", "TOBRADEX"]
+                    }
+                },
+                {
+                    name: "FASE 2",
+                    start: "2026-08-03",
+                    end: "2026-08-04",
+                    schedule: {
+                        "09:00": ["LEPHANET", "YELLOX", "TOBRADEX"],
+                        "14:00": ["TOBRADEX"],
+                        "19:00": ["TOBRADEX"],
+                        "21:00": ["YELLOX"],
+                        "23:59": ["LEPHANET", "TOBRADEX"]
+                    }
+                },
+                {
+                    name: "FASE 3",
+                    start: "2026-08-05",
+                    end: "2026-08-07",
+                    schedule: {
+                        "09:00": ["LEPHANET", "YELLOX", "TOBRADEX", "THEALOZ DUO"],
+                        "13:00": ["THEALOZ DUO"],
+                        "14:00": ["TOBRADEX"],
+                        "17:00": ["THEALOZ DUO"],
+                        "19:00": ["TOBRADEX", "THEALOZ DUO"],
+                        "21:00": ["YELLOX"],
+                        "23:59": ["LEPHANET", "TOBRADEX", "THEALOZ DUO"]
+                    }
+                },
+                {
+                    name: "FASE 4",
+                    start: "2026-08-08",
+                    end: "2026-08-12",
+                    schedule: {
+                        "09:00": ["LEPHANET", "YELLOX", "TOBRADEX", "THEALOZ DUO"],
+                        "13:00": ["THEALOZ DUO"],
+                        "16:30": ["TOBRADEX", "THEALOZ DUO"],
+                        "20:00": ["THEALOZ DUO"],
+                        "21:00": ["YELLOX"],
+                        "23:59": ["LEPHANET", "TOBRADEX", "THEALOZ DUO"]
+                    }
+                },
+                {
+                    name: "FASE 5",
+                    start: "2026-08-13",
+                    end: "2026-08-17",
+                    schedule: {
+                        "09:00": ["LEPHANET", "YELLOX", "TOBRADEX", "THEALOZ DUO"],
+                        "13:00": ["THEALOZ DUO"],
+                        "17:00": ["THEALOZ DUO"],
+                        "21:00": ["YELLOX", "THEALOZ DUO"],
+                        "23:59": ["LEPHANET", "TOBRADEX", "THEALOZ DUO"]
+                    }
+                },
+                {
+                    name: "FASE 6",
+                    start: "2026-08-18",
+                    end: "2026-08-22",
+                    schedule: {
+                        "09:00": ["LEPHANET", "YELLOX", "TOBRADEX", "THEALOZ DUO"],
+                        "13:00": ["THEALOZ DUO"],
+                        "17:00": ["THEALOZ DUO"],
+                        "21:00": ["YELLOX", "THEALOZ DUO"],
+                        "23:59": ["LEPHANET", "THEALOZ DUO"]
+                    }
+                },
+                {
+                    name: "FASE 7",
+                    start: "2026-08-23",
+                    end: "2026-08-29",
+                    schedule: {
+                        "09:00": ["LEPHANET", "YELLOX", "THEALOZ DUO"],
+                        "13:00": ["THEALOZ DUO"],
+                        "17:00": ["THEALOZ DUO"],
+                        "21:00": ["YELLOX", "THEALOZ DUO"],
+                        "23:59": ["LEPHANET", "THEALOZ DUO"]
+                    }
+                },
+                {
+                    name: "FASE 8",
+                    start: "2026-08-30",
+                    end: "2026-09-29",
+                    schedule: {
+                        "09:00": ["LEPHANET", "THEALOZ DUO"],
+                        "13:00": ["THEALOZ DUO"],
+                        "17:00": ["THEALOZ DUO"],
+                        "21:00": ["THEALOZ DUO"],
+                        "23:59": ["LEPHANET", "THEALOZ DUO"]
+                    }
+                },
+                {
+                    name: "FASE 9",
+                    start: "2026-09-30",
+                    end: "2026-10-05",
+                    schedule: {
+                        "09:00": ["THEALOZ DUO"],
+                        "13:00": ["THEALOZ DUO"],
+                        "17:00": ["THEALOZ DUO"],
+                        "21:00": ["THEALOZ DUO"],
+                        "23:59": ["THEALOZ DUO"]
+                    }
+                }
+            ]
+        };
+
+        const MEDICINE_ICONS = {
+            "LEPHANET": "🧻",
+            "YELLOX": "💛",
+            "TOBRADEX": "💧",
+            "THEALOZ DUO": "💧"
+        };
+
+        // Variable para controlar qué día se está viendo
+        let selectedDate = new Date();
+        window.userSelectedDate = false;
+
+        function formatDate(date) {
+            // Usar año-mes-día en zona horaria local, no UTC
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function previousDay() {
+            selectedDate.setDate(selectedDate.getDate() - 1);
+            window.userSelectedDate = true;
+            setTimeout(() => { window.userSelectedDate = false; }, 5000);
+            updateDisplay();
+        }
+
+        function nextDay() {
+            selectedDate.setDate(selectedDate.getDate() + 1);
+            window.userSelectedDate = true;
+            setTimeout(() => { window.userSelectedDate = false; }, 5000);
+            updateDisplay();
+        }
+
+        function jumpToDate() {
+            const input = document.getElementById('dateInput').value;
+            if (input) {
+                // Parseando YYYY-MM-DD sin conversión UTC
+                const [year, month, day] = input.split('-');
+                selectedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                
+                // Evitar que updateDisplay vuelva a cambiar la fecha
+                // Guardamos que el usuario eligió manualmente
+                window.userSelectedDate = true;
+                
+                updateDisplay();
+                
+                // Limpiar después de un tiempo
+                setTimeout(() => { window.userSelectedDate = false; }, 1000);
+            }
+        }
+
+        function getCurrentPhase(date = null) {
+            const checkDate = date || selectedDate;
+            const dateStr = formatDate(checkDate); // Usar formatDate que ya maneja zona horaria local
+            return TREATMENT_PLAN.phases.find(p => dateStr >= p.start && dateStr <= p.end) || TREATMENT_PLAN.phases[0];
+        }
+
+        function getScheduleForDate(date = null) {
+            const checkDate = date || selectedDate;
+            const dateStr = formatDate(checkDate); // Usar formatDate que maneja zona horaria local
+            const phase = TREATMENT_PLAN.phases.find(p => dateStr >= p.start && dateStr <= p.end);
+            return phase ? phase.schedule : {};
+        }
+
+        function updateDisplay() {
+            const now = new Date();
+            const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+            
+            // Si el usuario NO seleccionó manualmente una fecha, calcular automáticamente
+            if (!window.userSelectedDate) {
+                const hour = now.getHours();
+                const minute = now.getMinutes();
+                
+                // De 00:00 a 00:30, mostrar el día anterior (para ver y marcar las 23:59)
+                if (hour === 0 && minute <= 30) {
+                    selectedDate = new Date(now);
+                    selectedDate.setDate(selectedDate.getDate() - 1);
+                } else {
+                    // En cualquier otro caso, mostrar hoy
+                    selectedDate = new Date(now);
+                }
+            }
+            
+            // Mostrar la hora actual SIEMPRE
+            document.getElementById('timeDisplay').textContent = timeStr;
+            document.getElementById('selectedDateDisplay').textContent = 'Hoy';
+
+            // Actualizar input de fecha
+            document.getElementById('dateInput').value = formatDate(selectedDate);
+
+            const dateStr = selectedDate.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('dateDisplay').textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+
+            const phase = getCurrentPhase(selectedDate);
+            document.getElementById('phaseDisplay').textContent = phase.name;
+
+            updateDailySchedule(selectedDate, timeStr);
+        }
+
+        function updateDailySchedule(date, timeStr) {
+            const schedule = getScheduleForDate(date);
+            const container = document.getElementById('dailySchedule');
+            const now = new Date();
+            const isToday = formatDate(now) === formatDate(date);
+            const nTime = now.getHours() * 60 + now.getMinutes();
+
+            let allTimes = Object.keys(schedule).sort((a, b) => {
+                const [hA, mA] = a.split(':').map(Number);
+                const [hB, mB] = b.split(':').map(Number);
+                const tA = hA * 60 + mA;
+                const tB = hB * 60 + mB;
+                
+                // Si ambas son 00:00, son iguales
+                if (tA === 0 && tB === 0) return 0;
+                // Si A es 00:00, va al final
+                if (tA === 0) return 1;
+                // Si B es 00:00, va al final
+                if (tB === 0) return -1;
+                // Ordenar el resto numéricamente
+                return tA - tB;
+            });
+            
+            // Filtrar solo horarios entre 09:00 y 23:59
+            const WAKE_TIME = 9 * 60; // 09:00
+            
+            allTimes = allTimes.filter(t => {
+                const [h, m] = t.split(':').map(Number);
+                const tTime = h * 60 + m;
+                // Incluir todas las horas desde 09:00 en adelante
+                return tTime >= WAKE_TIME;
+            });
+
+            if (allTimes.length === 0) {
+                container.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No hay medicamentos programados.</div>';
+                return;
+            }
+
+            let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+
+            allTimes.forEach(time => {
+                const medicines = schedule[time];
+                const isCompleted = isTimeCompleted(date, time);
+                const [h, m] = time.split(':').map(Number);
+                const tTime = h * 60 + m;
+                const isCurrent = isToday && tTime <= nTime && tTime + 60 > nTime;
+                const isPast = isToday && tTime < nTime;
+
+                // Determinar color y estado
+                let bgColor = '#f9f9f9';
+                let borderColor = '#e0e0e0';
+                let indicator = '⏱️';
+
+                if (isCompleted) {
+                    bgColor = '#e8f5e9';
+                    borderColor = '#28a745';
+                    indicator = '✅';
+                } else if (isCurrent) {
+                    bgColor = '#fff3cd';
+                    borderColor = '#ffc107';
+                    indicator = '⚡';
+                } else if (isPast) {
+                    bgColor = '#ffebee';
+                    borderColor = '#dc3545';
+                    indicator = '❌';
+                } else {
+                    bgColor = '#f0f7ff';
+                    borderColor = '#667eea';
+                    indicator = '⏳';
+                }
+
+                html += `
+                    <div style="
+                        background: ${bgColor};
+                        border-left: 5px solid ${borderColor};
+                        padding: 16px;
+                        border-radius: 8px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        flex-wrap: wrap;
+                        gap: 12px;
+                    ">
+                        <div style="flex: 1; min-width: 200px;">
+                            <div style="font-size: 1.4em; font-weight: 700; color: #333; font-family: 'Monaco', monospace; margin-bottom: 8px;">
+                                ${indicator} ${time}
+                            </div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                ${medicines.map(med => {
+                                    let medIcon = MEDICINE_ICONS[med] || '💧';
+                                    return `<span style="background: white; padding: 6px 12px; border-radius: 6px; font-size: 0.9em; border: 1px solid #ddd;">${medIcon} ${med}</span>`;
+                                }).join('')}
+                            </div>
+                        </div>
+                        <button class="btn" onclick="toggleTime('${formatDate(date)}', '${time}')" style="
+                            background: ${isCompleted ? '#ffc107' : '#28a745'};
+                            color: ${isCompleted ? '#333' : 'white'};
+                            padding: 12px 20px;
+                            font-size: 0.95em;
+                            white-space: nowrap;
+                            min-width: 140px;
+                            margin: 0;
+                        ">
+                            ${isCompleted ? '↩️ Deshacer' : '✅ Hecho'}
+                        </button>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function toggleTime(dateStr, time) {
+            let completed = JSON.parse(localStorage.getItem('completedDoses') || '{}');
+            // Usar la fecha proporcionada o la de hoy
+            const key = dateStr ? `${dateStr}_${time}` : `${formatDate(new Date())}_${time}`;
+
+            if (completed[key]) {
+                delete completed[key];
+            } else {
+                completed[key] = true;
+            }
+
+            localStorage.setItem('completedDoses', JSON.stringify(completed));
+            updateDisplay();
+        }
+
+        function isTimeCompleted(date, time) {
+            const completed = JSON.parse(localStorage.getItem('completedDoses') || '{}');
+            const dateStr = typeof date === 'string' ? date : formatDate(date);
+            return completed[`${dateStr}_${time}`] || false;
+        }
+
+        // Registrar Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./service-worker.js?v=' + Date.now())
+                .then(reg => {
+                    console.log('Service Worker registrado');
+                    
+                    // Revisar actualizaciones cada 5 minutos
+                    setInterval(() => {
+                        reg.update();
+                    }, 5 * 60 * 1000);
+                    
+                    // Detectar actualizaciones
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'activated') {
+                                // Mostrar botón de actualización
+                                const updateBtn = document.getElementById('updateButton');
+                                if (updateBtn) {
+                                    updateBtn.style.display = 'block';
+                                }
+                            }
+                        });
+                    });
+                })
+                .catch(err => console.log('Error registrando SW:', err));
+        }
+
+        function updateApp() {
+            // Recargar la página para aplicar actualización
+            if (confirm('Actualizar la aplicación?')) {
+                // Limpiar caché antes de recargar
+                if ('caches' in window) {
+                    caches.keys().then(cacheNames => {
+                        cacheNames.forEach(cacheName => {
+                            caches.delete(cacheName);
+                        });
+                    });
+                }
+                // Recargar sin caché
+                window.location.reload(true);
+            }
+        }
+
+        // Solicitar permiso de notificaciones
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        // Función para enviar notificación
+        function sendNotification(title, options = {}) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                // Si hay service worker, usar notificación del sistema
+                if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({
+                        type: 'SHOW_NOTIFICATION',
+                        title: title,
+                        options: {
+                            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23667eea" width="100" height="100"/><text x="50" y="50" font-size="80" text-anchor="middle" dominant-baseline="central">👁️</text></svg>',
+                            badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23667eea" width="100" height="100"/><text x="50" y="50" font-size="80" text-anchor="middle" dominant-baseline="central">👁️</text></svg>',
+                            tag: 'tratamiento-ocular',
+                            requireInteraction: true,
+                            ...options
+                        }
+                    });
+                }
+                // Fallback: notificación del navegador
+                new Notification(title, {
+                    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23667eea" width="100" height="100"/><text x="50" y="50" font-size="80" text-anchor="middle" dominant-baseline="central">👁️</text></svg>',
+                    ...options
+                });
+            }
+        }
+
+        // Función para vibrar
+        function vibrate(pattern = [200, 100, 200]) {
+            if (navigator.vibrate) {
+                navigator.vibrate(pattern);
+            }
+        }
+
+        // Función para reproducir sonido
+        function playNotificationSound() {
+            // Crear un sonido simple con Web Audio API
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+
+        // Última hora de notificación (para evitar duplicados)
+        let lastNotificationTime = null;
+
+        // Revisar notificaciones cada minuto
+        setInterval(() => {
+            const now = new Date();
+            const isToday = formatDate(now) === formatDate(selectedDate);
+            
+            // Solo mostrar notificaciones si se está viendo el día actual
+            if (!isToday) return;
+            
+            const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+            const schedule = getScheduleForDate(selectedDate);
+            const allTimes = Object.keys(schedule).sort();
+
+            // Si es una hora exacta y no hemos notificado en este minuto
+            if (now.getSeconds() === 0 && lastNotificationTime !== timeStr) {
+                // Notificación si es hora de medicamentos
+                if (allTimes.includes(timeStr)) {
+                    const medicines = schedule[timeStr];
+                    const medNames = medicines.join(', ');
+                    
+                    sendNotification('⏰ ¡Es hora de aplicar medicamentos!', {
+                        body: `${timeStr} - ${medNames}`,
+                        tag: `med-${timeStr}`
+                    });
+                    
+                    playNotificationSound();
+                    vibrate([300, 100, 300, 100, 300]);
+                    
+                    lastNotificationTime = timeStr;
+                }
+            }
+        }, 1000);
+
+        // Actualizar cada minuto
+        setInterval(updateDisplay, 1000);
+        updateDisplay();
+    </script>
+</body>
+</html>
