@@ -1,5 +1,5 @@
 // Service Worker para notificaciones
-const CACHE_NAME = 'tratamiento-ocular-v2';
+const CACHE_NAME = 'tratamiento-ocular-v3';
 const STATIC_ASSETS = [
   './',
   './index.html',
