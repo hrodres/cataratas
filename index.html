@@ -861,6 +861,9 @@
                 .then(reg => {
                     console.log('Service Worker registrado');
                     
+                    // Comprobar actualizaciones cada 60 min (con URL fija, sin falsos positivos)
+                    setInterval(() => { reg.update(); }, 60 * 60 * 1000);
+                    
                     // Detectar actualizaciones reales
                     reg.addEventListener('updatefound', () => {
                         const newWorker = reg.installing;
