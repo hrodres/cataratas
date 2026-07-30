@@ -373,6 +373,7 @@
             <div class="time-display" id="timeDisplay">--:--</div>
             <div class="date-display" id="dateDisplay">-</div>
             <div class="phase-badge" id="phaseDisplay">-</div>
+            <div class="phase-badge" id="dayDisplay" style="margin-left:10px;">-</div>
         </div>
 
         <!-- PANEL DE ESTADO ACTUAL -->
@@ -717,7 +718,8 @@
 
             const phase = getCurrentPhase(now);
             const dayInfo = getPhaseDayInfo(phase);
-            document.getElementById('phaseDisplay').textContent = `${phase.name} · Día ${dayInfo.day}/${dayInfo.total}`;
+            document.getElementById('phaseDisplay').textContent = phase.name;
+            document.getElementById('dayDisplay').textContent = `Día ${dayInfo.day}/${dayInfo.total}`;
 
             updateDailySchedule(selectedDate, timeStr);
             updateStatusPanel();
