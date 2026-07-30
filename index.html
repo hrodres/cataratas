@@ -659,13 +659,13 @@
                     if (prevN === 0) {
                         changes.push(`🆕 ${med} (nuevo, ${currN} veces al día)`);
                     } else {
-                        changes.push(`📈 ${med} sube a ${currN} veces`);
+                        changes.push(`⬆️ ${med} sube a ${currN} veces`);
                     }
                 } else if (currN < prevN) {
                     if (currN === 0) {
                         changes.push(`✖️ Ya no toca ${med}`);
                     } else {
-                        changes.push(`📉 ${med} baja a ${currN} veces`);
+                        changes.push(`⬇️ ${med} baja a ${currN} veces`);
                     }
                 }
             });
