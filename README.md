@@ -2,7 +2,7 @@
 
 > PWA para el control de medicación post-cirugía de cataratas.
 
-![Version](https://img.shields.io/badge/versión-3.0-brightgreen)
+![Version](https://img.shields.io/badge/versión-3.1-brightgreen)
 ![PWA](https://img.shields.io/badge/PWA-✅-blue)
 ![License](https://img.shields.io/badge/licencia-MIT-orange)
 
@@ -24,6 +24,7 @@ Una **aplicación web progresiva (PWA)** diseñada para que una persona mayor pu
 - 🔊 **Sonido al marcar** — Feedback auditivo al marcar/desmarcar dosis
 - 📱 **PWA** — Funciona offline, se puede instalar en el móvil como una app normal
 - 🔄 **Actualizaciones automáticas** — Detecta cambios y ofrece actualizar
+- 🩺 **Revisiones médicas** — Caja de citas programadas visibles siempre (mismo estilo que recordatorios)
 
 ## 🏗️ Fases del tratamiento
 
